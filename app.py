@@ -25,6 +25,13 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 
+# Загрузчик пользователя для Flask-Login
+from modules.auth.models import User
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.get_by_id(user_id)
+
 # Импорт и регистрация модулей
 from modules.auth import auth as auth_blueprint
 from modules.stream_manager import stream_manager as stream_blueprint
