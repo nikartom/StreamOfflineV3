@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h2>Stream Status</h2>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Current Status</h5>
+                <p class="card-text">
+                    <strong>Active Stream:</strong> 
+                    {% if status.active_stream %}
+                        <span class="badge bg-success">{{ status.active_stream }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">None</span>
+                    {% endif %}
+                </p>
+                <p class="card-text">
+                    <strong>Fallback Active:</strong> 
+                    {% if status.is_fallback_active %}
+                        <span class="badge bg-warning text-dark">Yes</span>
+                    {% else %}
+                        <span class="badge bg-secondary">No</span>
+                    {% endif %}
+                </p>
+                <p class="card-text">
+                    <strong>Fallback Video:</strong> 
+                    {% if fallback_exists %}
+                        <span class="badge bg-success">Uploaded</span>
+                    {% else %}
+                        <span class="badge bg-danger">Missing</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <h2>Streaming Platforms</h2>
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title">Platform Management</h5>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPlatformModal">
+                        <i class="bi bi-plus-circle"></i> Add Platform
+                    </button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>URL</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="platformsTable">
+                            {% for platform in platforms %}
+                            <tr data-platform-id="{{ platform.id }}">
+                                <td>{{ platform.name }}</td>
+td>{{ platform.rtmp_url }}/{{ "****" if platform.stream_key else "" }}</td>
+                                <td>
+                                    {% if platform.enabled %}
+                                        <span class="badge bg-success">Enabled</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Disabled</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary edit-platform" 
+                                            data-platform-id="{{ platform.id }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-platform" 
+                                            data-platform-id="{{ platform.id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-{% if platform.enabled %}secondary{% else %}success{% endif %} toggle-platform" 
+                                            data-platform-id="{{ platform.id }}">
+                                        <i class="bi bi-{% if platform.enabled %}pause{% else %}play{% endif %}-circle"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center">No platforms configured</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <h2>Fallback Video</h2>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Upload Fallback Video</h5>
+                <p class="card-text">Upload an MP4 video to be played when the stream is offline.</p>
+                
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="fallbackVideo" class="form-label">Select Video File</label>
+                        <input class="form-control" type="file" id="fallbackVideo" name="file" accept="video/mp4">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload"></i> Upload
+                    </button>
+                </form>
+                
+                <div class="mt-3">
+                    <p class="mb-1"><strong>Status:</strong></p>
+                    {% if fallback_exists %}
+                        <span class="badge bg-success">Video uploaded</span>
+                    {% else %}
+                        <span class="badge bg-danger">No video uploaded</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <h2>How to Use</h2>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Streaming Instructions</h5>
+                <p class="card-text">Configure your streaming software (OBS, etc.) with the following settings:</p>
+                <ul>
+                    <li><strong>Server:</strong> rtmp://your-server-ip/live</li>
+                    <li><strong>Stream Key:</strong> anything-you-want</li>
+                </ul>
+                <p class="card-text">The server will automatically start forwarding to all enabled platforms when you start streaming.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Platform Modal -->
+<div class="modal fade" id="addPlatformModal" tabindex="-1" aria-labelledby="addPlatformModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPlatformModalLabel">Add Streaming Platform</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="platformForm">
+                    <input type="hidden" id="platformId">
+                    <div class="mb-3">
+                        <label for="platformName" class="form-label">Platform Name</label>
+                        <input type="text" class="form-control" id="platformName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="rtmpUrl" class="form-label">RTMP URL</label>
+                        <input type="url" class="form-control" id="rtmpUrl" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="streamKey" class="form-label">Stream Key</label>
+                        <input type="text" class="form-control" id="streamKey" required>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="platformEnabled" checked>
+                        <label class="form-check-label" for="platformEnabled">Enabled</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="savePlatform">Save Platform</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load platforms
+        loadPlatforms();
+        
+        // Upload form handler
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('fallbackVideo');
+            if (!fileInput.files[0]) {
+                alert('Please select a file to upload');
+                return;
+            }
+            
+            formData.append('file', fileInput.files[0]);
+            
+            fetch('/api/upload_fallback', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    alert('Fallback video uploaded successfully');
+                    location.reload();
+                } else {
+                    alert('Upload failed: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Upload failed');
+            });
+        });
+        
+        // Save platform handler
+        document.getElementById('savePlatform').addEventListener('click', function() {
+            const platformId = document.getElementById('platformId').value;
+            const platformData = {
+                name: document.getElementById('platformName').value,
+                rtmp_url: document.getElementById('rtmpUrl').value,
+                stream_key: document.getElementById('streamKey').value,
+                enabled: document.getElementById('platformEnabled').checked
+            };
+            
+            const method = platformId ? 'PUT' : 'POST';
+            const url = platformId ? `/api/platforms/${platformId}` : '/api/platforms';
+            
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(platformData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    throw new Error('Failed to save platform');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to save platform');
+            });
+        });
+        
+        // Delete platform handler
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.delete-platform')) {
+                const button = e.target.closest('.delete-platform');
+                const platformId = button.getAttribute('data-platform-id');
+                
+                if (confirm('Are you sure you want to delete this platform?')) {
+                    fetch(`/api/platforms/${platformId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            throw new Error('Failed to delete platform');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to delete platform');
+                    });
+                }
+            }
+            
+            // Toggle platform handler
+            if (e.target.closest('.toggle-platform')) {
+                const button = e.target.closest('.toggle-platform');
+                const platformId = button.getAttribute('data-platform-id');
+                
+                // Find the platform in the table
+                const row = document.querySelector(`tr[data-platform-id="${platformId}"]`);
+                const statusBadge = row.querySelector('td:nth-child(3) .badge');
+                const isEnabled = statusBadge.classList.contains('bg-success');
+                
+                const platformData = {
+                    enabled: !isEnabled
+                };
+                
+                fetch(`/api/platforms/${platformId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(platformData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Update UI
+                    if (data.enabled) {
+                        statusBadge.className = 'badge bg-success';
+                        statusBadge.textContent = 'Enabled';
+                        button.className = 'btn btn-sm btn-outline-secondary toggle-platform';
+                        button.querySelector('i').className = 'bi bi-pause-circle';
+                    } else {
+                        statusBadge.className = 'badge bg-secondary';
+                        statusBadge.textContent = 'Disabled';
+                        button.className = 'btn btn-sm btn-outline-success toggle-platform';
+                        button.querySelector('i').className = 'bi bi-play-circle';
+                    }
+                    button.setAttribute('data-platform-id', data.id);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to update platform');
+                });
+            }
+        });
+        
+        // Load platforms function
+        function loadPlatforms() {
+            fetch('/api/platforms')
+            .then(response => response.json())
+            .then(platforms => {
+                const tableBody = document.getElementById('platformsTable');
+                tableBody.innerHTML = '';
+                
+                if (platforms.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No platforms configured</td></tr>';
+                    return;
+                }
+                
+                platforms.forEach(platform => {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-platform-id', platform.id);
+                    row.innerHTML = `
+                        <td>${platform.name}</td>
+                        <td>${platform.rtmp_url}/***</td>
+                        <td>
+                            ${platform.enabled ? 
+                                '<span class="badge bg-success">Enabled</span>' : 
+                                '<span class="badge bg-secondary">Disabled</span>'}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary edit-platform" data-platform-id="${platform.id}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-platform" data-platform-id="${platform.id}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-${platform.enabled ? 'secondary' : 'success'} toggle-platform" 
+                                    data-platform-id="${platform.id}">
+                                <i class="bi bi-${platform.enabled ? 'pause' : 'play'}-circle"></i>
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

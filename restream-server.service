@@ -1,0 +1,14 @@
+[Unit]
+Description=Restream Server Control Panel
+After=network.target
+
+[Service]
+Type=simple
+User=stream
+WorkingDirectory=/home/stream/StreamOfflineV3
+ExecStart=/usr/bin/python3 /home/stream/StreamOfflineV3/app.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
