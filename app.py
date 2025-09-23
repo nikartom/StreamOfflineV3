@@ -1,3 +1,37 @@
+from flask import Flask, request, jsonify, render_template, redirect, url_for
+import json
+import os
+from datetime import datetime
+from ffmpeg_manager import ffmpeg_manager
+
+app = Flask(__name__)
+
+# Configuration
+PLATFORMS_FILE = 'data/platforms.json'
+FALLBACK_VIDEO = '/srv/streams/fallback.mp4'
+
+# Ensure data directories exist
+os.makedirs('data', exist_ok=True)
+os.makedirs('/srv/streams', exist_ok=True)
+
+# Initialize data files if they don't exist
+if not os.path.exists(PLATFORMS_FILE):
+    with open(PLATFORMS_FILE, 'w') as f:
+        json.dump([], f)
+
+def load_platforms():
+    """Load platforms from JSON file"""
+    try:
+        with open(PLATFORMS_FILE, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+
+def save_platforms(platforms):
+    """Save platforms to JSON file"""
+    with open(PLATFORMS_FILE, 'w') as f:
+        json.dump(platforms, f, indent=2)
+
 @app.route('/')
 def index():
     """Main dashboard page"""
