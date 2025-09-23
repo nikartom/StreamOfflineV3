@@ -1,7 +1,7 @@
 version: '3'
 services:
   srs:
-    image: ossrs/srs:6
+    image: ossrs/srs:5.0.213
     ports:
       - "1935:1935"  # RTMP
       - "1985:1985"  # SRS API
