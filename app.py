@@ -99,7 +99,9 @@ def on_publish():
     data = request.get_json() or request.form.to_dict()
     stream_key = data.get('name')  # Stream key from RTMP URL
     
+    print(f"=== ON_PUBLISH CALLED ===")
     print(f"Stream started: {stream_key}")
+    print(f"Received data: {data}")
     
     # Stop any fallback streams for this key
     ffmpeg_manager.stop_fallback_stream()
@@ -112,8 +114,10 @@ def on_publish():
     
     # Start forwarding to platforms
     platforms = load_platforms()
+    print(f"Forwarding to {len(platforms)} platforms")
     for platform in platforms:
         if platform['enabled']:
+            print(f"Starting forward to {platform['name']}")
             ffmpeg_manager.start_forward_stream(stream_key, platform)
     
     return jsonify({'status': 'ok'})
@@ -124,7 +128,9 @@ def on_unpublish():
     data = request.get_json() or request.form.to_dict()
     stream_key = data.get('name')  # Stream key from RTMP URL
     
+    print(f"=== ON_UNPUBLISH CALLED ===")
     print(f"Stream stopped: {stream_key}")
+    print(f"Received data: {data}")
     
     # Update stream status
     status = ffmpeg_manager.get_stream_status()

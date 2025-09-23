@@ -1,7 +1,7 @@
 version: '3'
 services:
   srs:
-    image: registry.cn-hangzhou.aliyuncs.com/ossrs/srs:6
+    image: registry.cn-hangzhou.aliyuncs.com/ossrs/srs:5
     ports:
       - "1935:1935"  # RTMP
       - "1985:1985"  # SRS API
@@ -10,6 +10,11 @@ services:
       - ./srs.conf:/usr/local/srs/conf/srs.conf
       - ./data:/data
     restart: unless-stopped
+    networks:
+      app-network:
+        ipv4_address: 172.18.0.2
+    extra_hosts:
+      - "flask:172.18.0.3"
 
   flask:
     build: .
@@ -21,3 +26,13 @@ services:
     restart: unless-stopped
     depends_on:
       - srs
+    networks:
+      app-network:
+        ipv4_address: 172.18.0.3
+
+networks:
+  app-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/24
