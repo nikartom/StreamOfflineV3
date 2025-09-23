@@ -1,0 +1,23 @@
+version: '3'
+services:
+  srs:
+    image: registry.cn-hangzhou.aliyuncs.com/ossrs/srs:6
+    ports:
+      - "1935:1935"  # RTMP
+      - "1985:1985"  # SRS API
+      - "8080:8080"  # HTTP server
+    volumes:
+      - ./srs.conf:/usr/local/srs/conf/srs.conf
+      - ./data:/data
+    restart: unless-stopped
+
+  flask:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - /srv/streams:/srv/streams
+    restart: unless-stopped
+    depends_on:
+      - srs
