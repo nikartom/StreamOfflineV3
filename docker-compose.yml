@@ -11,7 +11,9 @@ services:
       - ./data:/data
     restart: unless-stopped
     networks:
-      - streamnet
+      streamnet:
+        aliases:
+          - srs
 
 
   flask:
