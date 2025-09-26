@@ -39,7 +39,7 @@ class FallbackHandler:
             '-i', self.fallback_video_path,
             '-c', 'copy',  # Copy streams without re-encoding
             '-f', 'flv',
-            f'rtmp://127.0.0.1/live/{stream_key}_fallback'
+            f'rtmp://srs:1935/live/{stream_key}_fallback'
         ]
         
         try:

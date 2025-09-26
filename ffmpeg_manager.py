@@ -47,7 +47,7 @@ class FFmpegManager:
         # Use FFmpeg to forward stream
         cmd = [
             'ffmpeg',
-            '-i', f'rtmp://127.0.0.1/live/{stream_key}',
+            '-i', f'rtmp://srs:1935/live/{stream_key}',
             '-c', 'copy',  # Copy streams without re-encoding
             '-f', 'flv',
             output_url
@@ -112,7 +112,7 @@ class FFmpegManager:
             '-i', self.FALLBACK_VIDEO,
             '-c', 'copy',  # Copy streams without re-encoding
             '-f', 'flv',
-            f'rtmp://127.0.0.1/live/{stream_key}_fallback'
+            f'rtmp://srs:1935/live/{stream_key}_fallback'
         ]
         
         try:
