@@ -10,6 +10,8 @@ services:
       - ./srs.conf:/usr/local/srs/conf/srs.conf
       - ./data:/data
     restart: unless-stopped
+    networks:
+      - streamnet
 
 
   flask:
@@ -20,5 +22,13 @@ services:
       - ./data:/app/data
       - /srv/streams:/srv/streams
     restart: unless-stopped
+    networks:
+      streamnet:
+        aliases:
+          - flask
     depends_on:
       - srs
+
+networks:
+  streamnet:
+    driver: bridge
