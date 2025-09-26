@@ -10,8 +10,7 @@ services:
       - ./srs.conf:/usr/local/srs/conf/srs.conf
       - ./data:/data
     restart: unless-stopped
-    extra_hosts:
-      - "flask:172.18.0.3"
+
 
   flask:
     build: .
